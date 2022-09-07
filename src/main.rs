@@ -9,9 +9,6 @@ use flexi_logger::*;
 use rusqlite::{Connection, Result};
 use structopt::StructOpt;
 
-
-
-
 #[derive(Debug)]
 struct PathInfo {
     id: i32,
@@ -21,23 +18,14 @@ struct PathInfo {
 #[derive(StructOpt, Debug)]
 struct Cli {
     /// Path to a custom configuration file
-    #[structopt(long, short)]
-    pub config: Option<PathBuf>,
+    #[structopt(long, short, default_value = "config.json")]
+    pub config: PathBuf,
     /// Path to write logs to
     #[structopt(long, short)]
     pub log_dir: Option<PathBuf>,
-    /// Management API address
+    /// Listen address
     #[structopt(long, short, default_value = "127.0.0.1:6668")]
     pub management_addr: SocketAddr,
-    /// Default proxy address
-    #[structopt(long, short)]
-    pub default_addr: Option<SocketAddr>,
-    /// Default proxy certificate path
-    #[structopt(long)]
-    pub default_cert: Option<PathBuf>,
-    /// Default proxy certificate key path
-    #[structopt(long)]
-    pub default_key: Option<PathBuf>,
 }
 fn setup_logging(log_dir: Option<impl AsRef<Path>>) -> anyhow::Result<()> {
     let log_level = env::var("PROXY_LOG").unwrap_or_else(|_| "info".into());
