@@ -112,7 +112,7 @@ async fn main() -> anyhow::Result<()> {
         log::warn!("This is a dangerous action and should be taken with care");
     }
 
-    let conn = Connection::open("size_history.sql")?;
+    let conn = Connection::open("size_history.sqlite")?;
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS path_info (
