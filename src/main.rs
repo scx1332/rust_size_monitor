@@ -5,12 +5,12 @@ use std::{env, fs, io};
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use flexi_logger::*;
-use futures::future::{select, Either};
+
 use rusqlite::{Connection, Result};
 use structopt::StructOpt;
-use tokio::runtime;
-use tokio::signal::ctrl_c;
-use tokio::task;
+
+
+
 
 #[derive(Debug)]
 struct PathInfo {
