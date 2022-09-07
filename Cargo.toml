@@ -31,3 +31,4 @@ flexi_logger = { version = "0.22" }
 structopt = { version = "0.3" }
 
 actix-web = { version = "4.1" }
+rusqlite = { version = "0.28", features = ["bundled"] }
