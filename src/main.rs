@@ -6,11 +6,11 @@ use std::{env, fs, io};
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use flexi_logger::*;
 use futures::future::{select, Either};
+use rusqlite::{Connection, Result};
 use structopt::StructOpt;
 use tokio::runtime;
 use tokio::signal::ctrl_c;
 use tokio::task;
-use rusqlite::{Connection, Result};
 
 #[derive(Debug)]
 struct PathInfo {
@@ -112,7 +112,6 @@ async fn main() -> anyhow::Result<()> {
         log::warn!("This is a dangerous action and should be taken with care");
     }
 
-
     let conn = Connection::open("size_history.sql")?;
 
     conn.execute(
@@ -123,8 +122,6 @@ async fn main() -> anyhow::Result<()> {
         (), // empty list of parameters.
     )?;
 
-
-
     conn.execute(
         "CREATE TABLE IF NOT EXISTS path_entry (
         path_info INTEGER NOT NULL,
@@ -134,18 +131,14 @@ async fn main() -> anyhow::Result<()> {
         (), // empty list of parameters.
     )?;
 
-
     let t = "test".to_string();
-    conn.execute(
-        "INSERT INTO path_info (path) VALUES (?1)",
-        (&t,),
-    )?;
+    conn.execute("INSERT INTO path_info (path) VALUES (?1)", (&t,))?;
 
     let mut stmt = conn.prepare("SELECT id, path FROM path_info")?;
     let person_iter = stmt.query_map([], |row| {
         Ok(PathInfo {
             id: row.get(0)?,
-            path: row.get(1)?
+            path: row.get(1)?,
         })
     })?;
 
