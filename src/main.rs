@@ -8,6 +8,10 @@ use flexi_logger::*;
 
 use rusqlite::{Connection, Result};
 use structopt::StructOpt;
+use ya_http_proxy_client::api::ManagementApi;
+use ya_http_proxy_client::web::{WebClient, DEFAULT_MANAGEMENT_API_URL};
+use ya_http_proxy_client::Error;
+use ya_http_proxy_model::{CreateService, GlobalStats, Service, User};
 
 #[derive(Debug)]
 struct PathInfo {
@@ -24,7 +28,7 @@ struct Cli {
     #[structopt(long, short)]
     pub log_dir: Option<PathBuf>,
     /// Listen address
-    #[structopt(long, short, default_value = "127.0.0.1:6668")]
+    #[structopt(long, short, default_value = "127.0.0.1:7777")]
     pub management_addr: SocketAddr,
 }
 fn setup_logging(log_dir: Option<impl AsRef<Path>>) -> anyhow::Result<()> {
@@ -88,6 +92,8 @@ async fn greet(name: web::Path<String>) -> impl Responder {
     format!("Hello {name}!")
 }
 
+
+
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenv::dotenv();
@@ -99,6 +105,8 @@ async fn main() -> anyhow::Result<()> {
         log::warn!("!!! Management API server will NOT be bound to a loopback address !!!");
         log::warn!("This is a dangerous action and should be taken with care");
     }
+
+
 
     let conn = Connection::open("size_history.sqlite")?;
 
@@ -133,6 +141,9 @@ async fn main() -> anyhow::Result<()> {
     for person in person_iter {
         println!("Found person {:?}", person.unwrap());
     }
+
+
+
 
     HttpServer::new(|| {
         App::new()
