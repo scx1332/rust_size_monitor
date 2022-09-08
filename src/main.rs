@@ -8,7 +8,6 @@ use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use flexi_logger::*;
 
 use anyhow::anyhow;
-use hyper::body::HttpBody;
 use rusqlite::{Connection, Result};
 use std::str::FromStr;
 use structopt::StructOpt;
@@ -20,21 +19,21 @@ use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
 
 #[derive(Debug)]
 struct PathInfo {
-    id: i32,
-    path: String,
+    _id: i32,
+    _path: String,
 }
 
 #[derive(StructOpt, Debug)]
 struct Cli {
     /// Path to a custom configuration file
     #[structopt(long, short, default_value = "config.json")]
-    pub config: PathBuf,
+    pub _config: PathBuf,
     /// Path to write logs to
     #[structopt(long, short)]
     pub log_dir: Option<PathBuf>,
     /// Listen address
     #[structopt(long, short, default_value = "http://127.0.0.1:7777")]
-    pub management_addr: String,
+    pub _management_addr: String,
 }
 
 fn setup_logging(log_dir: Option<impl AsRef<Path>>) -> anyhow::Result<()> {
@@ -275,8 +274,8 @@ async fn main() -> anyhow::Result<()> {
     let mut stmt = conn.prepare("SELECT id, path FROM path_info")?;
     let person_iter = stmt.query_map([], |row| {
         Ok(PathInfo {
-            id: row.get(0)?,
-            path: row.get(1)?,
+            _id: row.get(0)?,
+            _path: row.get(1)?,
         })
     })?;
 
