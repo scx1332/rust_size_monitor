@@ -21,7 +21,7 @@ serde_default = { version = "0.1" }
 serde_json = { version = "1" }
 serde_yaml = { version = "0.8" }
 thiserror = { version = "1" }
-tokio = { version = "1", features = ["io-util", "net", "rt-multi-thread", "signal"] }
+tokio = { version = "1", features = ["full"] }
 tokio-rustls = { version = "0.23"}
 toml = { version = "0.5" }
 
@@ -32,7 +32,5 @@ structopt = { version = "0.3" }
 actix-web = {version = "4.1.0", default-features = false, features=["macros"]}
 rusqlite = { version = "0.28", features = ["bundled"] }
 
-#ya-http-proxy-client = { git = "https://github.com/golemfactory/ya-runtime-http-auth.git", branch = "main", crate = "ya-http-proxy-client" }
-#ya-http-proxy-model = { git = "https://github.com/golemfactory/ya-runtime-http-auth.git", branch = "main", crate = "ya-http-proxy-model" }
 ya-http-proxy-client = { version = "0.1", path = "crates/ya-http-proxy-client" }
 ya-http-proxy-model = { version = "0.1", path = "crates/ya-http-proxy-model" }

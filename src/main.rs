@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::http::Uri;
 use flexi_logger::*;
 
 use rusqlite::{Connection, Result};
@@ -12,6 +13,8 @@ use ya_http_proxy_client::api::ManagementApi;
 use ya_http_proxy_client::web::{WebClient, DEFAULT_MANAGEMENT_API_URL};
 use ya_http_proxy_client::Error;
 use ya_http_proxy_model::{CreateService, GlobalStats, Service, User};
+use tokio;
+use std::str::FromStr;
 
 #[derive(Debug)]
 struct PathInfo {
@@ -28,8 +31,8 @@ struct Cli {
     #[structopt(long, short)]
     pub log_dir: Option<PathBuf>,
     /// Listen address
-    #[structopt(long, short, default_value = "127.0.0.1:7777")]
-    pub management_addr: SocketAddr,
+    #[structopt(long, short, default_value = "http://127.0.0.1:7777")]
+    pub management_addr: String,
 }
 fn setup_logging(log_dir: Option<impl AsRef<Path>>) -> anyhow::Result<()> {
     let log_level = env::var("PROXY_LOG").unwrap_or_else(|_| "info".into());
@@ -92,21 +95,12 @@ async fn greet(name: web::Path<String>) -> impl Responder {
     format!("Hello {name}!")
 }
 
-
-
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenv::dotenv();
     let cli: Cli = Cli::from_args();
 
     setup_logging(cli.log_dir.as_ref())?;
-
-    if !cli.management_addr.ip().is_loopback() {
-        log::warn!("!!! Management API server will NOT be bound to a loopback address !!!");
-        log::warn!("This is a dangerous action and should be taken with care");
-    }
-
-
 
     let conn = Connection::open("size_history.sqlite")?;
 
@@ -142,7 +136,24 @@ async fn main() -> anyhow::Result<()> {
         println!("Found person {:?}", person.unwrap());
     }
 
-
+    let api_url = cli.management_addr.clone();
+    let client = WebClient::new(api_url.to_string())?;
+    let api = ManagementApi::new(client);
+    
+    let cs = CreateService{
+        name: "Erigon".to_string(),
+        server_name: vec![],
+        bind_https: None,
+        bind_http: None,
+        cert: None,
+        auth: None,
+        from: Uri::default(),
+        to: Uri::default(),
+        timeouts: None,
+        cpu_threads: None,
+        user: None
+    }; 
+    api.create_service(&cs).await?;
 
 
     HttpServer::new(|| {
