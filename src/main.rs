@@ -99,7 +99,6 @@ fn get_management_api() -> anyhow::Result<ManagementApi> {
     Ok(ManagementApi::new(client))
 }
 
-
 async fn get_erigon_service() -> anyhow::Result<Service> {
     let api = get_management_api()?;
 
@@ -153,10 +152,7 @@ async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn create_erigon_user(
-    username: String,
-    password: String,
-) -> anyhow::Result<()> {
+async fn create_erigon_user(username: String, password: String) -> anyhow::Result<()> {
     let api = get_management_api()?;
 
     let cu = CreateUser { username, password };
@@ -212,20 +208,18 @@ async fn create_erigon() -> HttpResponse {
 
 #[get("/create_erigon/{user}/{password}")]
 async fn create_erigon2(params: web::Path<(String, String)>) -> HttpResponse {
-    let _ = match create_erigon_endp(
-        "0.0.0.0:12001".to_string(),
-    )
-    .await
-    {
+    let _ = match create_erigon_endp("0.0.0.0:12001".to_string()).await {
         Ok(services) => {
             let body = "{\"result\":\"success\"}";
             HttpResponse::Ok()
                 .content_type("application/json")
                 .body(body)
         }
-        Err(err) => return HttpResponse::InternalServerError()
-            .content_type("plain/text")
-            .body(format!("Error when creating service {err}!"))
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .content_type("plain/text")
+                .body(format!("Error when creating service {err}!"))
+        }
     };
     let pair = params.into_inner();
     let user = pair.0;
