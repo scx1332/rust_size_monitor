@@ -12,11 +12,11 @@ use hyper::body::HttpBody;
 use rusqlite::{Connection, Result};
 use std::str::FromStr;
 use structopt::StructOpt;
-use tokio;
+
 use ya_http_proxy_client::api::ManagementApi;
-use ya_http_proxy_client::web::{WebClient, DEFAULT_MANAGEMENT_API_URL};
-use ya_http_proxy_client::Error;
-use ya_http_proxy_model::{Addresses, CreateService, CreateUser, GlobalStats, Service, User};
+use ya_http_proxy_client::web::{WebClient};
+
+use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
 
 #[derive(Debug)]
 struct PathInfo {
@@ -129,14 +129,14 @@ async fn create_erigon_endpoint(listen_addr: String) -> anyhow::Result<()> {
 }
 
 async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
-    let mut service = match get_erigon_service().await {
+    let service = match get_erigon_service().await {
         Ok(service) => Some(service),
-        Err(err) => {
+        Err(_err) => {
             //todo: check if really error or just not exists
             None
         }
     };
-    let service = match service {
+    let _service = match service {
         Some(service) => service,
         None => {
             create_erigon_endpoint(listen_addr).await?;
@@ -145,7 +145,7 @@ async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
             //}
             match get_erigon_service().await {
                 Ok(service) => service,
-                Err(err) => return Err(anyhow!("Unknown error when creating service")),
+                Err(_err) => return Err(anyhow!("Unknown error when creating service")),
             }
         }
     };
@@ -209,7 +209,7 @@ async fn create_erigon() -> HttpResponse {
 #[get("/create_erigon/{user}/{password}")]
 async fn create_erigon2(params: web::Path<(String, String)>) -> HttpResponse {
     let _ = match create_erigon_endp("0.0.0.0:12001".to_string()).await {
-        Ok(services) => {
+        Ok(_services) => {
             let body = "{\"result\":\"success\"}";
             HttpResponse::Ok()
                 .content_type("application/json")
