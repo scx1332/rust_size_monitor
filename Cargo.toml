@@ -29,7 +29,7 @@ anyhow = { version = "1"}
 dotenv = { version = "0.15" }
 flexi_logger = { version = "0.22" }
 structopt = { version = "0.3" }
-actix-web = {version = "4.1.0", default-features = false, features=["macros"]}
+actix-web = {version = "4.1.0"}
 rusqlite = { version = "0.28", features = ["bundled"] }
 
 ya-http-proxy-client = { version = "0.1", path = "crates/ya-http-proxy-client" }
