@@ -1,0 +1,69 @@
+name: Build for ARM
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+      - scx1332/*
+  pull_request:
+    branches:
+      - main
+      - release/*
+
+
+jobs:
+  build_arm:
+    name: Build Arm
+    env:
+      RUSTFLAGS: "-D warnings -C opt-level=z -C debuginfo=1"
+      X86_64_PC_WINDOWS_MSVC_OPENSSL_DIR: c:/vcpkg/installed/x64-windows
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install last stable Rust cross compiler
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: aarch64-unknown-linux-musl
+          override: true
+
+      - name: Build 
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target aarch64-unknown-linux-musl
+
+      - name: Pack
+        id: pack
+        shell: bash
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          OS_NAME: linux
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          TARGET_DIR=releases/rust_size_monitor-linux-${TAG_NAME}
+
+          ls -la target
+          mkdir -p "$TARGET_DIR/rust_size_monitor"
+          #strip "target/aarch64-unknown-linux-musl/release/rust_size_monitor"
+
+          set -x
+          cp target/aarch64-unknown-linux-musl/release/rust_size_monitor "$TARGET_DIR/rust_size_monitor/"
+          (cd releases && tar czvf "rust_size_monitor-${OS_NAME}-${TAG_NAME}.tar.gz" "rust_size_monitor-${OS_NAME}-${TAG_NAME}")
+
+          echo "::set-output name=artifact::rust_size_monitor-${OS_NAME}-${TAG_NAME}.tar.gz"
+          echo "::set-output name=media::application/tar+gzip"
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust_size_monitor
+          path: ./releases/${{ steps.pack.outputs.artifact }}
