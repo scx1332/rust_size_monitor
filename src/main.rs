@@ -18,7 +18,7 @@ use ya_http_proxy_client::api::ManagementApi;
 use ya_http_proxy_client::web::{WebClient};
 
 use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
-use crate::proxy_management::{create_erigon_endp, create_erigon_user};
+use crate::proxy_management::{create_erigon_user, get_or_create_endpoint};
 
 #[derive(Debug)]
 struct PathInfo {
@@ -142,35 +142,40 @@ async fn create_erigon() -> HttpResponse {
     }
 }*/
 
-#[get("/create_erigon/{user}/{password}")]
-async fn create_erigon2(params: web::Path<(String, String)>) -> HttpResponse {
-    let _ = match create_erigon_endp("0.0.0.0:12001".to_string()).await {
-        Ok(_services) => {
-            let body = "{\"result\":\"success\"}";
-            HttpResponse::Ok()
-                .content_type("application/json")
-                .body(body)
-        }
+#[get("/create/{service_name}/{port}/{user}/{password}")]
+async fn create_erigon2(params: web::Path<(String, u16, String, String)>) -> HttpResponse {
+    let tuple = params.into_inner();
+    let service_name = tuple.0;
+    let port = tuple.1;
+    let user = tuple.2;
+    let password = tuple.3;
+
+    log::info!("Add service user: {user} password: {password}");
+    let service = match get_or_create_endpoint(service_name,format!("0.0.0.0:{port}")).await {
+        Ok(service) => service,
         Err(err) => {
-            return HttpResponse::InternalServerError()
-                .content_type("plain/text")
+            log::error!("Error when creating service {err}");
+            return HttpResponse::BadRequest()
+                .content_type("text/html")
                 .body(format!("Error when creating service {err}!"))
         }
     };
-    let pair = params.into_inner();
-    let user = pair.0;
-    let password = pair.1;
 
-    match create_erigon_user(user, password).await {
+    match create_erigon_user(service, user, password).await {
         Ok(()) => {
             let body = "{\"result\":\"success\"}";
-            HttpResponse::Ok()
+            HttpResponse::BadRequest()
                 .content_type("application/json")
                 .body(body)
         }
-        Err(err) => HttpResponse::InternalServerError()
-            .content_type("plain/text")
-            .body(format!("Error when creating user {err}!")),
+        Err(err) =>
+            {
+                log::error!("Error when creating service {err}");
+
+                HttpResponse::BadRequest()
+                    .content_type("text/html")
+                    .body(format!("Error when creating user {err}!"))
+            },
     }
 }
 
@@ -244,6 +249,9 @@ async fn main() -> anyhow::Result<()> {
         api.create_service(&cs).await?;
     */
 
+    let bind_addr = "127.0.0.1";
+    let bind_port = 8080;
+    log::info!("Starting server: http://{bind_addr}:{bind_port}");
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(HttpResponse::Ok))
