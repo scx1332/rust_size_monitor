@@ -17,7 +17,7 @@ use structopt::StructOpt;
 use ya_http_proxy_client::api::ManagementApi;
 use ya_http_proxy_client::web::WebClient;
 
-use crate::proxy_management::{create_erigon_user, get_or_create_endpoint};
+use crate::proxy_management::{add_user, get_or_create_endpoint};
 use ya_http_proxy_model::{Service};
 
 #[derive(Debug)]
@@ -158,10 +158,10 @@ async fn create_erigon2(params: web::Path<(String, u16, String, String)>) -> Htt
             }
         };
 
-    match create_erigon_user(service, user, password).await {
+    match add_user(service, user, password).await {
         Ok(()) => {
             let body = "{\"result\":\"success\"}";
-            HttpResponse::BadRequest()
+            HttpResponse::Ok()
                 .content_type("application/json")
                 .body(body)
         }

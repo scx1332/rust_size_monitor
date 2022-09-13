@@ -22,7 +22,7 @@ pub async fn get_endpoint(service_name: &str) -> anyhow::Result<Service> {
         .map_err(anyhow::Error::from)
 }
 
-pub async fn create_erigon_user(
+pub async fn add_user(
     service: Service,
     username: String,
     password: String,
