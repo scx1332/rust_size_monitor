@@ -1974,6 +1974,7 @@ checksum = "c811ca4a8c853ef420abd8592ba53ddbbac90410fab6903b3e79972a631f7680"
 [[package]]
 name = "ya-http-proxy-client"
 version = "0.1.0"
+source = "git+https://github.com/golemfactory/ya-runtime-http-auth.git?branch=actix_http_upgrade#b20762b262a3c5b8583c4636ad11bc3096e1a857"
 dependencies = [
  "actix-http",
  "anyhow",
@@ -1990,6 +1991,7 @@ dependencies = [
 [[package]]
 name = "ya-http-proxy-model"
 version = "0.1.0"
+source = "git+https://github.com/golemfactory/ya-runtime-http-auth.git?branch=actix_http_upgrade#b20762b262a3c5b8583c4636ad11bc3096e1a857"
 dependencies = [
  "chrono",
  "http",

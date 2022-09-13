@@ -32,5 +32,7 @@ structopt = { version = "0.3" }
 actix-web = {version = "4.1.0"}
 rusqlite = { version = "0.28", features = ["bundled"] }
 
-ya-http-proxy-client = { version = "0.1", path = "crates/ya-http-proxy-client" }
-ya-http-proxy-model = { version = "0.1", path = "crates/ya-http-proxy-model" }
+#ya-http-proxy-client = { version = "0.1", path = "crates/ya-http-proxy-client" }
+#ya-http-proxy-model = { version = "0.1", path = "crates/ya-http-proxy-model" }
+ya-http-proxy-client = { git = "https://github.com/golemfactory/ya-runtime-http-auth.git", branch = "actix_http_upgrade" }
+ya-http-proxy-model = { git = "https://github.com/golemfactory/ya-runtime-http-auth.git", branch = "actix_http_upgrade" }
