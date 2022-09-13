@@ -14,10 +14,12 @@ pub fn get_management_api() -> anyhow::Result<ManagementApi> {
     Ok(ManagementApi::new(web_client))
 }
 
-pub async fn get_erigon_service() -> anyhow::Result<Service> {
+pub async fn get_endpoint(service_name: &str) -> anyhow::Result<Service> {
     let api = get_management_api()?;
 
-    api.get_service("erigon").await.map_err(anyhow::Error::from)
+    api.get_service(service_name)
+        .await
+        .map_err(anyhow::Error::from)
 }
 
 pub async fn create_erigon_user(
@@ -62,15 +64,14 @@ pub async fn get_or_create_endpoint(
     service_name: &str,
     listen_addr: &str,
 ) -> anyhow::Result<Service> {
-    match get_erigon_service().await {
+    match get_endpoint(service_name).await {
         Ok(service) => Ok(service),
         Err(err) => {
             //todo: check if really error or just not exists
-            log::debug!("Service not found {err}, creating new one...");
-            log::debug!("Creating new service... {service_name}");
+            log::debug!("Service not found: {err}, creating new one: {service_name}...");
             create_endpoint(service_name, listen_addr).await?;
             log::debug!("Service created... {service_name}");
-            get_erigon_service()
+            get_endpoint(service_name)
                 .await
                 .map_err(|err| anyhow!("Cannot found service after creation: {err}"))
         }
