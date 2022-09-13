@@ -19,11 +19,11 @@ pub async fn get_erigon_service() -> anyhow::Result<Service> {
     api.get_service("erigon").await.map_err(anyhow::Error::from)
 }
 
-pub async fn create_erigon_user(username: String, password: String) -> anyhow::Result<()> {
+pub async fn create_erigon_user(service: Service, username: String, password: String) -> anyhow::Result<()> {
     let api = get_management_api()?;
 
     let cu = CreateUser { username, password };
-    api.create_user("erigon", &cu)
+    api.create_user(&service.inner.name, &cu)
         .await
         .map_err(anyhow::Error::from)?;
 
@@ -31,15 +31,15 @@ pub async fn create_erigon_user(username: String, password: String) -> anyhow::R
 }
 
 
-pub async fn create_erigon_endpoint(listen_addr: String) -> anyhow::Result<()> {
+pub async fn create_endpoint(service_name: String, listen_addr: &str) -> anyhow::Result<()> {
     let api = get_management_api()?;
-
-    let addresses = Addresses::new(vec![SocketAddr::from_str(&listen_addr).unwrap()]);
-    let from_uri = Uri::from_str("/").unwrap();
-    let to_uri = Uri::from_str("http://127.0.0.1/").unwrap();
+    let listen_addr = SocketAddr::from_str(listen_addr)?;
+    let addresses = Addresses::new(vec![listen_addr]);
+    let from_uri = Uri::from_str("/")?;
+    let to_uri = Uri::from_str("http://127.0.0.1/")?;
     let cs = CreateService {
-        name: "erigon".to_string(),
-        server_name: vec![],
+        name: service_name.to_string(),
+        server_name: vec!["127.0.0.1".to_string()],
         bind_https: None,
         bind_http: Some(addresses),
         cert: None,
@@ -54,7 +54,7 @@ pub async fn create_erigon_endpoint(listen_addr: String) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
+pub async fn get_or_create_endpoint(service_name: String, listen_addr: String) -> anyhow::Result<Service> {
     let service = match get_erigon_service().await {
         Ok(service) => Some(service),
         Err(_err) => {
@@ -62,10 +62,10 @@ pub async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
             None
         }
     };
-    let _service = match service {
+    let service = match service {
         Some(service) => service,
         None => {
-            create_erigon_endpoint(listen_addr).await?;
+            create_endpoint(service_name, &listen_addr).await?;
             //Ok(()) => "Created successfully".to_string(),
             //Err(err) => return Err(anyhow!(format!("Error when adding service {err}!")))
             //}
@@ -75,5 +75,5 @@ pub async fn create_erigon_endp(listen_addr: String) -> anyhow::Result<()> {
             }
         }
     };
-    Ok(())
+    Ok(service)
 }
