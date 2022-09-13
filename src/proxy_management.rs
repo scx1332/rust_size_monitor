@@ -1,16 +1,17 @@
+use actix_web::http::Uri;
+use anyhow::anyhow;
 use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use actix_web::http::Uri;
-use anyhow::anyhow;
 use ya_http_proxy_client::api::ManagementApi;
 use ya_http_proxy_client::WebClient;
 use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
 
 pub fn get_management_api() -> anyhow::Result<ManagementApi> {
-    let api_url = env::var("PROXY_ADDR").unwrap_or("http://127.0.0.1:7777".to_string());
-    let client = WebClient::new(api_url.to_string()).map_err(anyhow::Error::from)?;
-    Ok(ManagementApi::new(client))
+    let api_url =
+        env::var("YA_HTTP_MANAGEMENT_ADDR").unwrap_or("http://127.0.0.1:7777".to_string());
+    let web_client = WebClient::new(api_url).map_err(anyhow::Error::from)?;
+    Ok(ManagementApi::new(web_client))
 }
 
 pub async fn get_erigon_service() -> anyhow::Result<Service> {
@@ -19,7 +20,11 @@ pub async fn get_erigon_service() -> anyhow::Result<Service> {
     api.get_service("erigon").await.map_err(anyhow::Error::from)
 }
 
-pub async fn create_erigon_user(service: Service, username: String, password: String) -> anyhow::Result<()> {
+pub async fn create_erigon_user(
+    service: Service,
+    username: String,
+    password: String,
+) -> anyhow::Result<()> {
     let api = get_management_api()?;
 
     let cu = CreateUser { username, password };
@@ -30,8 +35,7 @@ pub async fn create_erigon_user(service: Service, username: String, password: St
     Ok(())
 }
 
-
-pub async fn create_endpoint(service_name: String, listen_addr: &str) -> anyhow::Result<()> {
+pub async fn create_endpoint(service_name: &str, listen_addr: &str) -> anyhow::Result<()> {
     let api = get_management_api()?;
     let listen_addr = SocketAddr::from_str(listen_addr)?;
     let addresses = Addresses::new(vec![listen_addr]);
@@ -54,26 +58,21 @@ pub async fn create_endpoint(service_name: String, listen_addr: &str) -> anyhow:
     Ok(())
 }
 
-pub async fn get_or_create_endpoint(service_name: String, listen_addr: String) -> anyhow::Result<Service> {
-    let service = match get_erigon_service().await {
-        Ok(service) => Some(service),
-        Err(_err) => {
+pub async fn get_or_create_endpoint(
+    service_name: &str,
+    listen_addr: &str,
+) -> anyhow::Result<Service> {
+    match get_erigon_service().await {
+        Ok(service) => Ok(service),
+        Err(err) => {
             //todo: check if really error or just not exists
-            None
+            log::debug!("Service not found {err}, creating new one...");
+            log::debug!("Creating new service... {service_name}");
+            create_endpoint(service_name, listen_addr).await?;
+            log::debug!("Service created... {service_name}");
+            get_erigon_service()
+                .await
+                .map_err(|err| anyhow!("Cannot found service after creation: {err}"))
         }
-    };
-    let service = match service {
-        Some(service) => service,
-        None => {
-            create_endpoint(service_name, &listen_addr).await?;
-            //Ok(()) => "Created successfully".to_string(),
-            //Err(err) => return Err(anyhow!(format!("Error when adding service {err}!")))
-            //}
-            match get_erigon_service().await {
-                Ok(service) => service,
-                Err(_err) => return Err(anyhow!("Unknown error when creating service")),
-            }
-        }
-    };
-    Ok(service)
+    }
 }

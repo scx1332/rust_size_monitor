@@ -15,10 +15,10 @@ use std::str::FromStr;
 use structopt::StructOpt;
 
 use ya_http_proxy_client::api::ManagementApi;
-use ya_http_proxy_client::web::{WebClient};
+use ya_http_proxy_client::web::WebClient;
 
-use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
 use crate::proxy_management::{create_erigon_user, get_or_create_endpoint};
+use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
 
 #[derive(Debug)]
 struct PathInfo {
@@ -95,10 +95,6 @@ fn log_format(
     )
 }
 
-
-
-
-
 async fn list_services_help() -> anyhow::Result<Vec<Service>> {
     let api_url = "http://127.0.0.1:7777".to_string();
     let client = WebClient::new(api_url.to_string()).map_err(anyhow::Error::from)?;
@@ -151,15 +147,16 @@ async fn create_erigon2(params: web::Path<(String, u16, String, String)>) -> Htt
     let password = tuple.3;
 
     log::info!("Add service user: {user} password: {password}");
-    let service = match get_or_create_endpoint(service_name,format!("0.0.0.0:{port}")).await {
-        Ok(service) => service,
-        Err(err) => {
-            log::error!("Error when creating service {err}");
-            return HttpResponse::BadRequest()
-                .content_type("text/html")
-                .body(format!("Error when creating service {err}!"))
-        }
-    };
+    let service =
+        match get_or_create_endpoint(&service_name, format!("0.0.0.0:{port}").as_str()).await {
+            Ok(service) => service,
+            Err(err) => {
+                log::error!("Error when creating service {err}");
+                return HttpResponse::BadRequest()
+                    .content_type("text/html")
+                    .body(format!("Error when creating service {err}!"));
+            }
+        };
 
     match create_erigon_user(service, user, password).await {
         Ok(()) => {
@@ -168,14 +165,13 @@ async fn create_erigon2(params: web::Path<(String, u16, String, String)>) -> Htt
                 .content_type("application/json")
                 .body(body)
         }
-        Err(err) =>
-            {
-                log::error!("Error when creating service {err}");
+        Err(err) => {
+            log::error!("Error when creating service {err}");
 
-                HttpResponse::BadRequest()
-                    .content_type("text/html")
-                    .body(format!("Error when creating user {err}!"))
-            },
+            HttpResponse::BadRequest()
+                .content_type("text/html")
+                .body(format!("Error when creating user {err}!"))
+        }
     }
 }
 
