@@ -1,24 +1,24 @@
 mod proxy_management;
 
 use chrono::{DateTime, Local};
-use std::net::SocketAddr;
+
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
-use actix_web::http::Uri;
+
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use flexi_logger::*;
 
-use anyhow::anyhow;
+
 use rusqlite::{Connection, Result};
-use std::str::FromStr;
+
 use structopt::StructOpt;
 
 use ya_http_proxy_client::api::ManagementApi;
 use ya_http_proxy_client::web::WebClient;
 
 use crate::proxy_management::{create_erigon_user, get_or_create_endpoint};
-use ya_http_proxy_model::{Addresses, CreateService, CreateUser, Service};
+use ya_http_proxy_model::{Service};
 
 #[derive(Debug)]
 struct PathInfo {
