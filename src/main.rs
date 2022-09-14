@@ -1,3 +1,5 @@
+mod db;
+
 use chrono::{DateTime, Local};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
@@ -8,12 +10,8 @@ use flexi_logger::*;
 
 use rusqlite::{Connection, Result};
 use structopt::StructOpt;
+use crate::db::{add_path_info, get_paths, setup_db};
 
-#[derive(Debug)]
-struct PathInfo {
-    id: i32,
-    path: String,
-}
 
 #[derive(StructOpt, Debug)]
 struct Cli {
@@ -100,38 +98,14 @@ async fn main() -> anyhow::Result<()> {
         log::warn!("This is a dangerous action and should be taken with care");
     }
 
-    let conn = Connection::open("size_history.sqlite")?;
+    setup_db();
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS path_info (
-        id   INTEGER PRIMARY KEY,
-        path TEXT    NOT NULL
-    )",
-        (), // empty list of parameters.
-    )?;
+    add_path_info("test");
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS path_entry (
-        path_info INTEGER NOT NULL,
-        path_size INTEGER NOT NULL,
-        FOREIGN KEY(path_info) REFERENCES path_info(id)
-    )",
-        (), // empty list of parameters.
-    )?;
+    let paths = get_paths()?;
 
-    let t = "test".to_string();
-    conn.execute("INSERT INTO path_info (path) VALUES (?1)", (&t,))?;
-
-    let mut stmt = conn.prepare("SELECT id, path FROM path_info")?;
-    let person_iter = stmt.query_map([], |row| {
-        Ok(PathInfo {
-            id: row.get(0)?,
-            path: row.get(1)?,
-        })
-    })?;
-
-    for person in person_iter {
-        println!("Found person {:?}", person.unwrap());
+    for path in paths {
+        println!("Found path {:?}", path);
     }
 
     HttpServer::new(|| {
